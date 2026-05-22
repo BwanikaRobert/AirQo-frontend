@@ -24,6 +24,7 @@ import { getLastActiveModule } from "@/core/utils/userPreferences";
 import { ROUTE_LINKS } from "@/core/routes";
 // import GoogleAuthSection from "@/components/features/auth/google-auth-section";
 import { motion, AnimatePresence } from "framer-motion";
+import { getEnvironment } from '@/lib/envConstants';
 
 
 const loginSchema = z.object({
@@ -38,6 +39,8 @@ export default function LoginPage() {
   const [captchaToken, setCaptchaToken] = useState("");
   const captchaRef = useRef<HCaptchaWidgetHandle>(null);
   const searchParams = useSearchParams();
+  const environment = getEnvironment();
+  const isDevelopmentEnv=environment !=='production';
   const callbackUrl = useMemo(() => {
     const raw = searchParams.get("callbackUrl");
     if (!raw) return "";
@@ -123,7 +126,7 @@ export default function LoginPage() {
     if (!isPasswordValid) return;
 
     // If the user didn't provide the captchaToken
-    if (captchaToken === "") {
+    if (captchaToken === "" && isDevelopmentEnv)  {
        showBanner({
          severity: 'error',
          message: 'Please complete the CAPTCHA before signing in.',
@@ -345,15 +348,15 @@ export default function LoginPage() {
                             </div>
                           )}
                         />
-                        <HCaptchaWidget
+                        {isDevelopmentEnv && <HCaptchaWidget
                           ref={captchaRef}
                           onVerify={(token) => setCaptchaToken(token)}
                           onExpire={() => setCaptchaToken("")}
-                        />
+                        />}
                         <ReusableButton
                           type="submit"
                           className="w-full font-medium bg-primary hover:bg-primary/90"
-                          disabled={isLoading || !captchaToken}
+                          disabled={isLoading || isDevelopmentEnv}
                           loading={isLoading}
                           variant="filled"
                         >
