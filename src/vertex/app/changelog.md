@@ -2,8 +2,47 @@
 
 > **Note**: This changelog consolidates all recent improvements, features, and fixes to the AirQo Vertex frontend.
 
+## Version 2.0.35
+**Released:** July 31, 2026
+
+### Fix: "Add AirQo Device" claimed a device rather than creating one
+
+On the home, My Devices, Devices Overview, and empty-state screens, **"Add AirQo Device"** opened the claim flow — which attaches a device AirQo has *already* shipped and prepared. Users who read "Add" as "create" hit *"Device doesn't exist yet"*. The button is now **"Claim AirQo Device"** everywhere it opens that modal.
+
+<details>
+<summary><strong>Why the label misled</strong></summary>
+
+- "Add" implies bringing something into existence. `POST /devices/claim` does the opposite: it requires the device to already exist, be unclaimed, and match a `claim_token` issued at shipping. A user without a prepared device cannot succeed, and the 404 is the correct response to taking the button at its word.
+- The same words were also used by the admin create flow (`create-device-modal.tsx` → `POST /devices`), where "Add" *is* accurate — so the identical label meant two incompatible things depending on which screen you were on.
+- Device creation is intentionally admin-only. General users are only ever meant to claim devices they have physically received, or import their own non-AirQo sensors.
+
+</details>
+
+<details>
+<summary><strong>Scope</strong></summary>
+
+- Renamed in the claim modal's dialog title and its manual-input submit button (`Adding…` → `Claiming…`), plus the five screens that open it: home (×2), My Devices (×2), Devices Overview, `HomeEmptyState`, `cohorts-empty-state`.
+- **Admin → Networks is deliberately unchanged.** It opens `create-device-modal.tsx`, which genuinely creates a record, so "Add AirQo Device" stays correct there.
+- Test selectors query this button by accessible name, so the Playwright RBAC/lifecycle specs and the `cohorts-empty-state` unit test were updated in step. The `claim-device-modal` unit tests exercise the cohort-import path and reference no renamed strings.
+- The method-select cards inside the modal ("Add Single Device" / "Add Multiple Devices") are left as-is — they describe how many devices are being claimed, and the dialog title above them now supplies the claim context.
+
+</details>
+
+<details>
+<summary><strong>Not included — follow-up</strong></summary>
+
+- The claim modal still shows the raw API message on a 404, and offers no route onward for a user who has no claim token. Clearer helper text, a "no device yet?" escape hatch, and improved error copy need two decisions first: whether the 404 message is overridden in the frontend or fixed at the API, and where an "import your own sensor instead" hint should lead. The claim-token field itself already exists and is validated — no change needed there.
+
+</details>
+
+**Files changed:**
+- `components/features/claim/claim-device-modal.tsx` — dialog title and submit label
+- `app/(authenticated)/home/page.tsx`, `app/(authenticated)/devices/my-devices/page.tsx`, `app/(authenticated)/devices/overview/page.tsx`, `components/features/home/HomeEmptyState.tsx`, `components/features/cohorts/cohorts-empty-state.tsx` — button labels
+- `components/features/cohorts/cohorts-empty-state.test.tsx`, `e2e/tests/rbac/action-visibility.spec.ts`, `e2e/tests/rbac/resource-scoped.spec.ts`, `e2e/tests/devices/device-lifecycle.spec.ts` — selectors
+- `e2e/support/claim-mocks.ts` — doc comment
+
 ## Version 2.0.34
-**Released:** July 30, 2026
+**Released:** July 31, 2026
 
 ### Fix: Calibrate and Website launcher links now resolve to staging
 

@@ -639,7 +639,7 @@ const ClaimDeviceModal: React.FC<ClaimDeviceModalProps> = ({
 
   const getDialogConfig = () => {
     const base = {
-      title: 'Add AirQo Device',
+      title: 'Claim AirQo Device',
       showFooter: false,
       showCloseButton: true,
       preventBackdropClose: false,
@@ -670,7 +670,7 @@ const ClaimDeviceModal: React.FC<ClaimDeviceModalProps> = ({
           ...base,
           showFooter: true,
           primaryAction: {
-            label: isPending ? 'Adding...' : 'Add AirQo Device',
+            label: isPending ? 'Claiming...' : 'Claim AirQo Device',
             onClick: formMethods.handleSubmit(onManualSubmit),
             disabled: isPending,
           },
