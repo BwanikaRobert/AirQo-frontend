@@ -74,6 +74,13 @@ describe('getEnvironmentAwareUrl', () => {
     );
   });
 
+  it('maps Calibrate to its staging host', () => {
+    setHostname('localhost');
+    expect(getEnvironmentAwareUrl('https://airqalibrate.airqo.net/')).toBe(
+      'https://staging-airqalibrate.airqo.net/'
+    );
+  });
+
   it('preserves path and query when rewriting', () => {
     setHostname('localhost');
     expect(

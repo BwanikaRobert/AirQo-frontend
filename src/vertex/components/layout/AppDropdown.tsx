@@ -55,7 +55,7 @@ const AppDropdown: React.FC<AppDropdownProps> = ({ className = '' }) => {
             name: 'Website',
             description: 'AirQo\'s mission and research',
             icon: AqGlobe02Maps_Travel,
-            href: 'https://airqo.net/',
+            href: getEnvironmentAwareUrl('https://airqo.net/'),
             color: 'bg-purple-500',
         },
         {

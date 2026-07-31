@@ -2,6 +2,41 @@
 
 > **Note**: This changelog consolidates all recent improvements, features, and fixes to the AirQo Vertex frontend.
 
+## Version 2.0.34
+**Released:** July 30, 2026
+
+### Fix: Calibrate and Website launcher links now resolve to staging
+
+Follow-up to 2.0.33. Two launcher tiles still opened production apps from staging, and the URL helper is now a direct mirror of the Nexus implementation rather than a parallel one.
+
+<details>
+<summary><strong>Fix: Calibrate had a staging deployment after all</strong></summary>
+
+- 2.0.33 recorded `airqalibrate.airqo.net` as having no staging deployment and left it deliberately unmapped. **That was wrong** — `staging-airqalibrate.airqo.net` exists; it is simply referenced nowhere in this repository, so the codebase gave no sign of it. Confirmed by checking the running deployment.
+- The mapping is now in place, so the Calibrate tile opens staging Calibrate from staging and from localhost.
+
+</details>
+
+<details>
+<summary><strong>Fix: the Website tile bypassed the helper entirely</strong></summary>
+
+- `airqo.net` / `www.airqo.net` → `staging.airqo.net` was already in the mapping, but the Website tile passed a bare production URL rather than routing through `getEnvironmentAwareUrl`, so the entry could never fire — coverage that looked real and did nothing. 2.0.33 noted this as latent; it is now wired up and the staging host verified working.
+
+</details>
+
+<details>
+<summary><strong>Chore: helper restructured to mirror Nexus</strong></summary>
+
+- `getEnvironmentAwareUrl` now follows the same shape as `nexus/src/shared/utils/url.ts` and `website/src/lib/environmentAwareUrl.ts`: matching doc-comment format, staging detection via the parsed `location.href` hostname with a `location.hostname` fallback, and sequential `if (host === …)` blocks in place of the lookup table. Behaviour is unchanged for every host the previous version handled.
+- Two deliberate differences from Nexus are retained, both load-bearing: `analytics.airqo.net` is mapped (Nexus omits it because Nexus *is* that app — without it the Vertex launcher's Nexus tile points at production from staging), and the local-host check matches the bracketed IPv6 loopback `[::1]`, which is the form `location.hostname` actually reports.
+
+</details>
+
+**Files changed:**
+- `core/urls.tsx` — `airqalibrate.airqo.net` mapping added; helper restructured to mirror Nexus
+- `core/urls.test.ts` — Calibrate mapping case (12 total)
+- `components/layout/AppDropdown.tsx` — Website tile routed through `getEnvironmentAwareUrl`
+
 ## Version 2.0.33
 **Released:** July 30, 2026
 

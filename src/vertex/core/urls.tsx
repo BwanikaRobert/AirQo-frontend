@@ -23,57 +23,100 @@ export const profileSettingsUrl = `${ANALYTICS_BASE_URL}/user/profile`;
 export const signUpUrl = `${ANALYTICS_BASE_URL}/user/creation/individual/register`;
 
 /**
- * Production host -> staging host for cross-app links.
+ * Rewrites external service URLs to point to staging equivalents when the
+ * current page is served from a staging or localhost environment.
  *
- * The mapping is explicit because the convention is not uniform: most apps take
- * a `staging-` prefix, while the marketing site uses a `staging.` subdomain.
- * Hosts absent from this table are left alone (no known staging deployment).
- */
-const STAGING_HOSTS: Readonly<Record<string, string>> = {
-  "analytics.airqo.net": "staging-analytics.airqo.net",
-  "vertex.airqo.net": "staging-vertex.airqo.net",
-  "beacon.airqo.net": "staging-beacon.airqo.net",
-  "platform.airqo.net": "staging-platform.airqo.net",
-  "airqo.net": "staging.airqo.net",
-  "www.airqo.net": "staging.airqo.net",
-};
-
-// `location.hostname` serialises IPv6 hosts *with* brackets per the URL spec, so
-// `http://[::1]:3000` reports "[::1]" — the bracketed form is the one that actually
-// occurs. The bare form is kept only to guard non-browser callers.
-const LOCAL_HOSTNAMES = [
-  "localhost",
-  "127.0.0.1",
-  "[::1]",
-  "::1",
-  "0.0.0.0",
-];
-
-/**
- * Rewrites a production cross-app URL to its staging equivalent when the current
- * page is itself on staging (or running locally).
+ * Mirrors `getEnvironmentAwareUrl` in Nexus (`src/shared/utils/url.ts`) and the
+ * website (`src/lib/environmentAwareUrl.ts`).
  *
- * Detection is by runtime hostname rather than `NODE_ENV`: the staging deployment
- * is a production Next.js build, so `NODE_ENV === "production"` there too and
- * would incorrectly hand out production links.
+ * Detection: checks `window.location.hostname` for the substring "staging".
+ * Deliberately not `NODE_ENV` — the staging deployment is a production Next.js
+ * build, so `NODE_ENV === "production"` there too and would hand out production
+ * links to staging users.
+ *
+ * Mapping:
+ *   - analytics.airqo.net → staging-analytics.airqo.net
+ *   - airqalibrate.airqo.net → staging-airqalibrate.airqo.net
+ *   - vertex.airqo.net → staging-vertex.airqo.net
+ *   - beacon.airqo.net → staging-beacon.airqo.net
+ *   - platform.airqo.net → staging-platform.airqo.net
+ *   - airqo.net / www.airqo.net → staging.airqo.net
+ *
+ * Outside staging (production) the original URL is returned unchanged.
  */
 export const getEnvironmentAwareUrl = (baseUrl: string): string => {
-  // Server-side render: no hostname to inspect, so emit the URL as written.
-  if (typeof window === "undefined") return baseUrl;
+  // Only run environment detection in the browser
+  if (typeof window === "undefined") {
+    return baseUrl;
+  }
 
   try {
-    const currentHost = (window.location?.hostname || "").toLowerCase();
-    const isLocalhost = LOCAL_HOSTNAMES.includes(currentHost);
-    const isStaging = currentHost.includes("staging");
+    const href = (window.location && window.location.href) || "";
+    const currentHost = (window.location && window.location.hostname) || "";
 
-    if (!isStaging && !isLocalhost) return baseUrl;
+    // `location.hostname` serialises IPv6 hosts *with* brackets per the URL spec,
+    // so `http://[::1]:3000` reports "[::1]" — match the bracketed form.
+    const isLocalhost =
+      currentHost === "localhost" ||
+      currentHost === "127.0.0.1" ||
+      currentHost === "[::1]" ||
+      currentHost === "::1" ||
+      currentHost === "0.0.0.0";
+
+    // Determine staging by hostname only (avoid matching path/query)
+    let isStaging = false;
+    try {
+      const hrefHostname = new URL(href).hostname.toLowerCase();
+      isStaging =
+        hrefHostname.includes("staging") ||
+        currentHost.toLowerCase().includes("staging");
+    } catch {
+      // If href is somehow invalid/relative, fall back to currentHost check
+      isStaging = currentHost.toLowerCase().includes("staging");
+    }
+
+    // Only map to staging hosts when we're on a staging URL or running locally
+    if (!isStaging && !isLocalhost) {
+      return baseUrl;
+    }
 
     const parsed = new URL(baseUrl);
-    const stagingHost = STAGING_HOSTS[parsed.hostname.toLowerCase()];
-    if (!stagingHost) return baseUrl;
+    const host = parsed.hostname.toLowerCase();
 
-    parsed.hostname = stagingHost;
-    return parsed.toString();
+    if (host === "analytics.airqo.net") {
+      parsed.hostname = "staging-analytics.airqo.net";
+      return parsed.toString();
+    }
+
+    if (host === "airqalibrate.airqo.net") {
+      parsed.hostname = "staging-airqalibrate.airqo.net";
+      return parsed.toString();
+    }
+
+    if (host === "vertex.airqo.net") {
+      parsed.hostname = "staging-vertex.airqo.net";
+      return parsed.toString();
+    }
+
+    if (host === "beacon.airqo.net") {
+      parsed.hostname = "staging-beacon.airqo.net";
+      
+      return parsed.toString();
+    }
+
+    if (host === "platform.airqo.net") {
+      parsed.hostname = "staging-platform.airqo.net";
+      
+      return parsed.toString();
+    }
+
+    if (host === "airqo.net" || host === "www.airqo.net") {
+      parsed.hostname = "staging.airqo.net";
+     
+      return parsed.toString();
+    }
+    // Leave other hosts unchanged.
+    return baseUrl;
   } catch {
     return baseUrl;
   }
