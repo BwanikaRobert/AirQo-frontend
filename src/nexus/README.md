@@ -1,7 +1,7 @@
 # AirQo Nexus
 
 [![codecov](https://codecov.io/gh/airqo-platform/AirQo-frontend/branch/staging/graph/badge.svg?token=LsBcFL42rz&flag=nexus)](https://codecov.io/gh/airqo-platform/AirQo-frontend/flags/nexus)
-![tests](https://img.shields.io/badge/tests-passing-brightgreen?style=flat-square)
+![tests](https://img.shields.io/badge/tests-1030%20passing-brightgreen?style=flat-square)
 ![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-brightgreen?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?style=flat-square)
 
